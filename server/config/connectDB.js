@@ -1,20 +1,24 @@
+// config/connectDB.js
+
 const mongoose = require('mongoose')
 
-async function connectDB(){
+async function connectDB() {
     try {
+
         await mongoose.connect(process.env.MONGODB_URI)
 
         const connection = mongoose.connection
 
-        connection.on('connected',()=>{
-            console.log("Connect to DB")
+        connection.on('connected', () => {
+            console.log("Connected to MongoDB")
         })
 
-        connection.on('error',(error)=>{
-            console.log("Something is wrong in mongodb ",error)
+        connection.on('error', (error) => {
+            console.log("MongoDB connection error :", error)
         })
+
     } catch (error) {
-        console.log("Something is wrong ",error)
+        console.log("Database connection failed :", error)
     }
 }
 

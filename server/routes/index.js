@@ -1,28 +1,50 @@
+// index.js / server.js
+
 const express = require('express')
-const registerUser = require('../controller/registerUser')
-const checkEmail = require('../controller/checkEmail')
-const checkPassword = require('../controller/checkPassword')
-const userDetails = require('../controller/userDetails')
-const logout = require('../controller/logout')
-const updateUserDetails = require('../controller/updateUserDetails')
-const searchUser = require('../controller/searchUser')
+const cors = require('cors')
+const cookieParser = require('cookie-parser')
+const dotenv = require('dotenv')
+const http = require('http')
+const { Server } = require('socket.io')
 
-const router = express.Router()
+const connectDB = require('./config/connectDB')
+const router = require('./routes/index')
 
-//create user api
-router.post('/register',registerUser)
-//check user email
-router.post('/email',checkEmail)
-//check user password
-router.post('/password',checkPassword)
-//login user details
-router.get('/user-details',userDetails)
-//logout user
-router.get('/logout',logout)
-//update user details
-router.post('/update-user',updateUserDetails)
-//search user
-router.post("/search-user",searchUser)
+dotenv.config()
 
+const app = express()
 
-module.exports = router
+const server = http.createServer(app)
+
+app.use(cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true
+}))
+
+app.use(express.json())
+app.use(cookieParser())
+
+app.use('/api', router)
+
+const io = new Server(server, {
+    cors: {
+        origin: process.env.FRONTEND_URL,
+        credentials: true
+    }
+})
+
+io.on('connection', (socket) => {
+    console.log("User connected :", socket.id)
+
+    socket.on('disconnect', () => {
+        console.log("User disconnected :", socket.id)
+    })
+})
+
+const PORT = process.env.PORT || 8080
+
+connectDB().then(() => {
+    server.listen(PORT, () => {
+        console.log("Server running at " + PORT)
+    })
+})
