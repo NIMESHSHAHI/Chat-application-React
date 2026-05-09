@@ -1,54 +1,21 @@
 const express = require('express')
-const cors = require('cors')
-const cookieParser = require('cookie-parser')
-const dotenv = require('dotenv')
-const http = require('http')
-const { Server } = require('socket.io')
 
-const connectDB = require('./config/connectDB')
-const router = require('./routes')
+const registerUser = require('../controller/registerUser')
+const checkEmail = require('../controller/checkEmail')
+const checkPassword = require('../controller/checkPassword')
+const userDetails = require('../controller/userDetails')
+const logout = require('../controller/logout')
+const updateUserDetails = require('../controller/updateUserDetails')
+const searchUser = require('../controller/searchUser')
 
-dotenv.config()
+const router = express.Router()
 
-const app = express()
+router.post('/register', registerUser)
+router.post('/email', checkEmail)
+router.post('/password', checkPassword)
+router.get('/user-details', userDetails)
+router.get('/logout', logout)
+router.post('/update-user', updateUserDetails)
+router.post('/search-user', searchUser)
 
-const server = http.createServer(app)
-
-app.use(cors({
-    origin: process.env.FRONTEND_URL,
-    credentials: true
-}))
-
-app.use(express.json())
-app.use(cookieParser())
-
-app.get("/", (req, res) => {
-    res.json({
-        message: "Server running at 10000"
-    })
-})
-
-app.use('/api', router)
-
-const io = new Server(server, {
-    cors: {
-        origin: process.env.FRONTEND_URL,
-        credentials: true
-    }
-})
-
-io.on('connection', (socket) => {
-    console.log("User connected :", socket.id)
-
-    socket.on('disconnect', () => {
-        console.log("User disconnected :", socket.id)
-    })
-})
-
-const PORT = process.env.PORT || 10000
-
-connectDB().then(() => {
-    server.listen(PORT, () => {
-        console.log("Server running at " + PORT)
-    })
-})
+module.exports = router
