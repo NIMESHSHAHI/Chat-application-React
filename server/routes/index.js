@@ -1,36 +1,54 @@
-// server/routes/index.js
-
 const express = require('express')
+const cors = require('cors')
+const cookieParser = require('cookie-parser')
+const dotenv = require('dotenv')
+const http = require('http')
+const { Server } = require('socket.io')
 
-const registerUser = require('../controller/registerUser')
-const checkEmail = require('../controller/checkEmail')
-const checkPassword = require('../controller/checkPassword')
-const userDetails = require('../controller/userDetails')
-const logout = require('../controller/logout')
-const updateUserDetails = require('../controller/updateUserDetails')
-const searchUser = require('../controller/searchUser')
+const connectDB = require('./config/connectDB')
+const router = require('./routes')
 
-const router = express.Router()
+dotenv.config()
 
-// register user
-router.post('/register', registerUser)
+const app = express()
 
-// check email
-router.post('/email', checkEmail)
+const server = http.createServer(app)
 
-// check password
-router.post('/password', checkPassword)
+app.use(cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true
+}))
 
-// user details
-router.get('/user-details', userDetails)
+app.use(express.json())
+app.use(cookieParser())
 
-// logout
-router.get('/logout', logout)
+app.get("/", (req, res) => {
+    res.json({
+        message: "Server running at 10000"
+    })
+})
 
-// update user
-router.post('/update-user', updateUserDetails)
+app.use('/api', router)
 
-// search user
-router.post('/search-user', searchUser)
+const io = new Server(server, {
+    cors: {
+        origin: process.env.FRONTEND_URL,
+        credentials: true
+    }
+})
 
-module.exports = router
+io.on('connection', (socket) => {
+    console.log("User connected :", socket.id)
+
+    socket.on('disconnect', () => {
+        console.log("User disconnected :", socket.id)
+    })
+})
+
+const PORT = process.env.PORT || 10000
+
+connectDB().then(() => {
+    server.listen(PORT, () => {
+        console.log("Server running at " + PORT)
+    })
+})
